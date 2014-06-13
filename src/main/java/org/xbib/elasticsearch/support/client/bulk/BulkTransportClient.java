@@ -51,6 +51,11 @@ public class BulkTransportClient extends BaseIngestTransportClient implements In
      * The outstanding requests
      */
     private final AtomicLong outstandingRequests = new AtomicLong(0L);
+    
+    /**
+     * Timeout before forcefully shutting down
+     */
+    private final int timeout = 60;
 
     /**
      * The BulkProcessor
@@ -366,6 +371,18 @@ public class BulkTransportClient extends BaseIngestTransportClient implements In
                     stopBulk(index);
                 }
             }
+            logger.info("waiting for outstandingRequests to be zero (timeout: " + Integer.toString(timeout) + ")");
+            int sleepCycles = 0;
+            while (outstandingRequests.get() > 0L && sleepCycles < timeout) {
+	            try {
+	                Thread.sleep(1000);
+	                logger.debug("cycle: " + Integer.toString(sleepCycles) + "; outstandingRequests: " + outstandingRequests.toString());
+	                sleepCycles++;
+	            } catch(InterruptedException ex) {
+	                Thread.currentThread().interrupt();
+	            }
+            }
+            this.flush();
             logger.info("shutting down...");
             super.shutdown();
             logger.info("shutting down completed");

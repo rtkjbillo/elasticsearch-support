@@ -51,7 +51,7 @@ public class BulkTransportClient extends BaseIngestTransportClient implements In
      * The outstanding requests
      */
     private final AtomicLong outstandingRequests = new AtomicLong(0L);
-    
+
     /**
      * Timeout before forcefully shutting down
      */
@@ -161,6 +161,7 @@ public class BulkTransportClient extends BaseIngestTransportClient implements In
                     logger.error("bulk [{}] failed", executionId);
                     for (BulkItemResponse itemResponse : response.getItems()) {
                         if (itemResponse.isFailed()) {
+                        	logger.error("Bulk insert error: {} / {}", itemResponse.getFailure().getType(), itemResponse.getFailureMessage());
                             state.getSucceeded().dec(1);
                             state.getFailed().inc(1);
                         }
@@ -268,7 +269,8 @@ public class BulkTransportClient extends BaseIngestTransportClient implements In
     @Override
     public BulkTransportClient index(IndexRequest indexRequest) {
         if (closed) {
-            throw new ElasticsearchIllegalStateException("client is closed");
+        	logger.error("Client is closed; cannot index this request");
+        	return null;
         }
         try {
             state.getCurrentIngest().inc();

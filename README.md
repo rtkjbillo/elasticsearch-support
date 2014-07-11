@@ -6,6 +6,25 @@ This plugin offers some Java helper classes for easier use of Elasticsearch API.
 
 ![Travis](https://travis-ci.org/jprante/elasticsearch-support.png)
 
+## Resilience fork
+
+As of July 2014, I (@rtkjbillo) had some issues with reliability and consistency of record import. The following changes were made to elasticsearch-knapsack and elasticsearch-support, and suit our particular purposes:
+
+In elasticsearch-knapsack (https://github.com/rtkjbillo/elasticsearch-knapsack):
+
+* Add `_site` directory to plugin build (avoid warnings in ElasticSearch logs)
+* Don't flush records every 5 seconds (bulk requests were not containing all records)
+* Don't set a maximum data size per bulk request
+* We repack .tar.gz archives with data; the recreated .tar files have leading directory entries (index/type). Ignore them.
+* Ignore cases where the index already exists when running with createIndex=true
+
+In elasticsearch-support (https://github.com/rtkjbillo/elasticsearch-support):
+
+* Wait 60 seconds for individual bulk import threads to close themselves (avoids terminating threads early)
+* Ignore 'client closed' errors and continue to try and import
+
+The version number was changed to 1.2.1.1 and this fork works with ES 1.2.1.
+
 ## Versions
 
 | Elasticsearch version    | Plugin      | Release date |
